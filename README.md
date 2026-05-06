@@ -50,10 +50,10 @@ LLM_WORKFLOW_LOG=false        # true — логировать полный вв�
 ## Docker
 
 ```bash
-git clone https://github.com/<username>/news_aggregator_bot.git
+git clone https://github.com/pschdl1c/news_aggregator_bot.git
 cd news_aggregator_bot
 cp .env.example .env
-nano .env
+nano .env # заполнить BOT_TOKEN, GOOGLE_API_KEY, ADMIN_USER_ID
 docker compose up -d --build
 ```
 
