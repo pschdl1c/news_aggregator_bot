@@ -49,24 +49,17 @@ LLM_WORKFLOW_LOG=false        # true — логировать полный вв�
 
 ## Docker
 
-**Первый запуск на VPS:**
-
 ```bash
 git clone https://github.com/<username>/news_aggregator_bot.git
 cd news_aggregator_bot
 cp .env.example .env
-nano .env  # заполнить BOT_TOKEN, GOOGLE_API_KEY, ADMIN_USER_ID
+nano .env
 docker compose up -d --build
-docker compose logs -f
 ```
 
-**Обновление:**
+Обновление: `git pull && docker compose up -d --build`
 
-```bash
-git pull && docker compose up -d --build
-```
-
-Данные (SQLite) сохраняются в Docker named volume `bot_data` и не теряются при пересборке. Контейнер запускается под непривилегированным пользователем.
+Данные (SQLite) сохраняются в named volume `bot_data` и не теряются при пересборке.
 
 ## Команды бота
 
