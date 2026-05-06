@@ -1,0 +1,24 @@
+[project]
+name = "news-aggregator-bot"
+version = "0.1.0"
+description = "Telegram bot for AI/LLM/ML news aggregation"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "aiogram==3.13.0",
+    "aiosqlite==0.21.0",
+    "pydantic-settings==2.7.0",
+    "python-dotenv==1.0.1",
+    "httpx==0.28.1",
+    "trafilatura>=2.0.0",
+    "google-genai>=1.46.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.3",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
