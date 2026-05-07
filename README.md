@@ -59,6 +59,8 @@ docker compose up -d --build
 
 Обновление: `git pull && docker compose up -d --build`
 
+Логи: `docker compose logs -f`
+
 Данные (SQLite) сохраняются в named volume `bot_data` и не теряются при пересборке.
 
 ## Команды бота
