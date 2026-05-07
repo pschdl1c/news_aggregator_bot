@@ -164,7 +164,8 @@ async def _chat(
     if system:
         body["systemInstruction"] = system
 
-    url = f"{_GOOGLE_BASE}/{model}:generateContent?key={settings.google_api_key}"
+    url = f"{_GOOGLE_BASE}/{model}:generateContent"
+    headers = {"x-goog-api-key": settings.google_api_key}
 
     last_exc: Exception | None = None
     t0 = 0.0
@@ -173,7 +174,7 @@ async def _chat(
             await asyncio.sleep(2 ** attempt)  # 2s, 4s
         t0 = time.monotonic()
         async with httpx.AsyncClient(timeout=120) as client:
-            r = await client.post(url, json=body)
+            r = await client.post(url, json=body, headers=headers)
         if r.status_code < 500:
             break
         last_exc = httpx.HTTPStatusError(
