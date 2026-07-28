@@ -1,6 +1,7 @@
 import os
 import pytest
-from unittest.mock import AsyncMock, patch
+import httpx
+from unittest.mock import AsyncMock, MagicMock, patch
 
 os.environ.setdefault("BOT_TOKEN", "test:token")
 os.environ.setdefault("GOOGLE_API_KEY", "test-key")
@@ -36,3 +37,25 @@ async def test_deep_dive_summary_calls_chat():
 
     assert result == "Анализ"
     assert mock_chat.called
+
+
+@pytest.mark.asyncio
+async def test_verify_model_success():
+    with patch("services.llm_service._chat", AsyncMock(return_value="OK")):
+        ok, detail = await llm_service.verify_model("gemini-3.5-flash-lite")
+
+    assert ok is True
+    assert detail == "OK"
+
+
+@pytest.mark.asyncio
+async def test_verify_model_not_found():
+    response = MagicMock()
+    response.json.return_value = {"error": {"message": "Model not found"}}
+    error = httpx.HTTPStatusError("404", request=MagicMock(), response=response)
+
+    with patch("services.llm_service._chat", AsyncMock(side_effect=error)):
+        ok, detail = await llm_service.verify_model("not-a-real-model")
+
+    assert ok is False
+    assert detail == "Model not found"

@@ -3,6 +3,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 MODEL_CATALOGUE = [
     {
+        "id": "gemini-3.5-flash-lite",
+        "tier": "G",
+        "input_token_limit": 1048576,
+        "output_token_limit": 65536,
+    },
+    {
         "id": "gemma-4-31b-it",
         "tier": "S",
         "input_token_limit": 131072,
@@ -24,7 +30,7 @@ class Settings(BaseSettings):
     google_api_key: str
     admin_user_id: int
 
-    default_model: str = "gemma-4-31b-it"
+    default_model: str = "gemini-3.5-flash-lite"
     database_path: str = "./data/bot.db"
     llm_workflow_log: bool = False
 

@@ -223,6 +223,26 @@ class NoArticlesError(Exception):
     pass
 
 
+async def verify_model(model: str) -> tuple[bool, str]:
+    """Делает минимальный generateContent-запрос, чтобы убедиться, что модель существует и отвечает."""
+    try:
+        text = await _chat(
+            model,
+            [{"role": "user", "content": "Reply with exactly one word: OK"}],
+            max_tokens=10,
+            stage="verify_model",
+        )
+        return True, text.strip()
+    except httpx.HTTPStatusError as exc:
+        try:
+            detail = exc.response.json().get("error", {}).get("message", exc.response.text)
+        except Exception:
+            detail = exc.response.text
+        return False, detail
+    except Exception as exc:
+        return False, str(exc)
+
+
 async def get_digest(user_id: int, model: str) -> tuple[str, list[dict]]:
     articles = await news_fetcher.fetch_all(days=7)
     if not articles:
