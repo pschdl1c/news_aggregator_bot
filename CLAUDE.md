@@ -42,13 +42,13 @@ news_aggregator_bot/
 │   │   ├── digest.py            # кнопка "Дайджест за неделю"; парсинг ответа LLM
 │   │   ├── deep_dive.py         # кнопки 🔍N — deep dive в конкретную статью
 │   │   ├── chat.py              # follow-up чат после дайджеста (BotStates.chat)
-│   │   └── model.py             # выбор LLM-модели через inline-кнопки
+│   │   └── model.py             # выбор модели: каталог + ручной ввод с live-проверкой
 │   ├── keyboards/
 │   │   └── main_menu.py         # main_menu(), back_to_menu(), deep_dive_keyboard()
 │   ├── middlewares/
 │   │   └── auth.py              # whitelist-проверка перед каждым апдейтом
 │   ├── states/
-│   │   └── chat.py              # FSM: BotStates.chat, BotStates.deep_dive
+│   │   └── chat.py              # FSM: BotStates.chat, BotStates.deep_dive, BotStates.waiting_model_name
 │   └── utils.py                 # send_long_message (разбивка на чанки по 4096)
 ├── services/
 │   ├── news_fetcher.py          # агрегация: HuggingFace Daily Papers
@@ -138,8 +138,10 @@ CREATE TABLE user_settings (
 
 ### `user_settings` — выбранная модель
 
-- Читается в начале каждого LLM-вызова (`get_user_model`). Если записи нет — используется `default_model` из `.env`.
-- Записывается при нажатии «⚙️ Сменить модель» → `cb_set_model` в `model.py`.
+- Читается в начале каждого LLM-вызова (`get_user_model`). Если записи нет — используется `settings.default_model`.
+- Записывается двумя путями в `model.py`:
+  - выбор из каталога — `cb_set_model` (кнопка `[Tier] id`);
+  - ручной ввод — кнопка «✏️ Ввести вручную» → `cb_custom_model` переводит в `BotStates.waiting_model_name` → `handle_custom_model` получает текст, гоняет через `llm_service.verify_model()` и сохраняет **только при успехе**. При отказе показывает точную причину от Google API и остаётся в том же состоянии, чтобы можно было ввести другое имя.
 
 ## LLM-бэкенд: Google AI Studio
 
@@ -157,12 +159,15 @@ POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateCon
 
 ```python
 MODEL_CATALOGUE = [
-    {"id": "gemma-4-31b-it",    "tier": "S", "input_token_limit": 131072, "output_token_limit": 8192},
-    {"id": "gemma-4-26b-a4b-it","tier": "A", "input_token_limit": 131072, "output_token_limit": 8192},
+    {"id": "gemini-3.5-flash-lite", "tier": "G", "input_token_limit": 1048576, "output_token_limit": 65536},
+    {"id": "gemma-4-31b-it",        "tier": "S", "input_token_limit": 131072,  "output_token_limit": 8192},
+    {"id": "gemma-4-26b-a4b-it",    "tier": "A", "input_token_limit": 131072,  "output_token_limit": 8192},
 ]
 ```
 
-Пользователь выбирает модель через `⚙️ Сменить модель` → сохраняется в `user_settings`. Дефолт — `gemma-4-31b-it`.
+Пользователь выбирает модель через `⚙️ Сменить модель` → сохраняется в `user_settings`. Дефолт (`settings.default_model`) — `gemini-3.5-flash-lite`.
+
+Каталог — не единственный вариант: кнопка «✏️ Ввести вручную» позволяет задать **любую** модель Google AI Studio по имени (например `gemini-3.6-flash`), не только те, что перечислены в `MODEL_CATALOGUE`. Перед сохранением `verify_model()` в `llm_service.py` делает реальный минимальный `generateContent`-запрос ("Reply with exactly one word: OK") тем же путём (`_chat()`), что и обычные вызовы — так отсекаются и опечатки, и модели, которые *числятся* в API, но фактически недоступны (например возвращают 404 "no longer available to new users" или 429 quota exceeded).
 
 ### Промпты (`services/prompts.py`)
 
